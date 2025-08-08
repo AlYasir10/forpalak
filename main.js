@@ -5,7 +5,6 @@ const btnYes = document.querySelector(".btn-yes");
 const btnNo = document.querySelector(".btn-no");
 
 function getRandomNumber(min, max) {
-  // Calculate the random number between min and max (inclusive)
   const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
   return randomNumber;
 }
@@ -14,61 +13,67 @@ function moveNoButton() {
   const containerRect = container.getBoundingClientRect();
   const containerHeight = containerRect.height;
   const containerWidth = containerRect.width;
-  const btnHeight = btnNo.getBoundingClientRect().height;
-  const btnWidth = btnNo.getBoundingClientRect().width;
+  const btnRect = btnNo.getBoundingClientRect();
+  const btnHeight = btnRect.height;
+  const btnWidth = btnRect.width;
   
   // Get current position relative to container
-  const currentTop = parseInt(btnNo.style.top) || 0;
-  const currentLeft = parseInt(btnNo.style.left) || 0;
+  const containerTop = containerRect.top;
+  const containerLeft = containerRect.left;
+  const currentTop = btnRect.top - containerTop;
+  const currentLeft = btnRect.left - containerLeft;
   
-  let newTop = currentTop;
-  let newLeft = currentLeft;
+  let newTop, newLeft;
+  let attempts = 0;
   
-  // Ensure minimum movement distance
-  while (Math.abs(newTop - currentTop) < containerHeight / 3) {
-    newTop = getRandomNumber(0, containerHeight - btnHeight);
-  }
+  // Generate new position that's far enough from current position
+  do {
+    newTop = getRandomNumber(0, Math.max(0, containerHeight - btnHeight));
+    newLeft = getRandomNumber(0, Math.max(0, containerWidth - btnWidth));
+    attempts++;
+  } while (
+    (Math.abs(newTop - currentTop) < containerHeight / 4 || 
+     Math.abs(newLeft - currentLeft) < containerWidth / 4) && 
+    attempts < 10
+  );
   
-  while (Math.abs(newLeft - currentLeft) < containerWidth / 3) {
-    newLeft = getRandomNumber(0, containerWidth - btnWidth);
-  }
-  
+  // Apply new position
   btnNo.style.position = "absolute";
-  btnNo.style.top = Math.floor(newTop) + "px";
-  btnNo.style.left = Math.floor(newLeft) + "px";
+  btnNo.style.top = newTop + "px";
+  btnNo.style.left = newLeft + "px";
 }
-
-// For desktop - mouseover
-btnNo.addEventListener("mouseover", (event) => {
-  moveNoButton();
-});
 
 // Check if it's a mobile device
 const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 if (isMobile) {
-  // For mobile devices - use touch events
+  // Mobile: Use touchstart for immediate response
   btnNo.addEventListener("touchstart", (event) => {
-    event.preventDefault(); // Prevent default touch behavior
+    event.preventDefault();
+    event.stopPropagation();
     moveNoButton();
-  });
+  }, { passive: false });
   
-  btnNo.addEventListener("touchend", (event) => {
-    event.preventDefault(); // Prevent click from firing after touchend
-  });
-  
-  // Backup for mobile click
+  // Also handle click as a backup
   btnNo.addEventListener("click", (event) => {
-    event.preventDefault(); // Prevent the actual click
+    event.preventDefault();
+    event.stopPropagation();
     moveNoButton();
   });
+  
+  // Prevent context menu on long press
+  btnNo.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
+  
 } else {
-  // For desktop - keep original mouseover behavior
+  // Desktop: Use mouseover
   btnNo.addEventListener("mouseover", (event) => {
     moveNoButton();
   });
 }
 
+// Yes button functionality
 btnYes.addEventListener("click", (e) => {
   btnNo.classList.add("hide");
   imageOne.classList.add("hide");
