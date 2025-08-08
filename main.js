@@ -11,24 +11,29 @@ function getRandomNumber(min, max) {
 }
 
 function moveNoButton() {
-  const containerHeight = container.getBoundingClientRect().height;
-  const containerWidth = container.getBoundingClientRect().width;
+  const containerRect = container.getBoundingClientRect();
+  const containerHeight = containerRect.height;
+  const containerWidth = containerRect.width;
   const btnHeight = btnNo.getBoundingClientRect().height;
   const btnWidth = btnNo.getBoundingClientRect().width;
-  const btnTop = btnNo.getBoundingClientRect().top;
-  const btnLeft = btnNo.getBoundingClientRect().left;
   
-  let newTop = btnTop;
-  let newLeft = btnLeft;
+  // Get current position relative to container
+  const currentTop = parseInt(btnNo.style.top) || 0;
+  const currentLeft = parseInt(btnNo.style.left) || 0;
   
-  while (Math.abs(newTop - btnTop) < containerHeight / 3) {
+  let newTop = currentTop;
+  let newLeft = currentLeft;
+  
+  // Ensure minimum movement distance
+  while (Math.abs(newTop - currentTop) < containerHeight / 3) {
     newTop = getRandomNumber(0, containerHeight - btnHeight);
   }
   
-  while (Math.abs(newLeft - btnLeft) < containerWidth / 3) {
+  while (Math.abs(newLeft - currentLeft) < containerWidth / 3) {
     newLeft = getRandomNumber(0, containerWidth - btnWidth);
   }
   
+  btnNo.style.position = "absolute";
   btnNo.style.top = Math.floor(newTop) + "px";
   btnNo.style.left = Math.floor(newLeft) + "px";
 }
@@ -38,29 +43,31 @@ btnNo.addEventListener("mouseover", (event) => {
   moveNoButton();
 });
 
-// For mobile - touch events
-btnNo.addEventListener("touchstart", (event) => {
-  event.preventDefault(); // Prevent default touch behavior
-  moveNoButton();
-});
+// Check if it's a mobile device
+const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-// Additional mobile support - click event (as backup)
-btnNo.addEventListener("click", (event) => {
-  // Only move on mobile devices, not desktop
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+if (isMobile) {
+  // For mobile devices - use touch events
+  btnNo.addEventListener("touchstart", (event) => {
+    event.preventDefault(); // Prevent default touch behavior
+    moveNoButton();
+  });
+  
+  btnNo.addEventListener("touchend", (event) => {
+    event.preventDefault(); // Prevent click from firing after touchend
+  });
+  
+  // Backup for mobile click
+  btnNo.addEventListener("click", (event) => {
     event.preventDefault(); // Prevent the actual click
     moveNoButton();
-  }
-});
-
-// Alternative approach: Also handle mousedown for faster response
-btnNo.addEventListener("mousedown", (event) => {
-  // Only on mobile devices
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    event.preventDefault();
+  });
+} else {
+  // For desktop - keep original mouseover behavior
+  btnNo.addEventListener("mouseover", (event) => {
     moveNoButton();
-  }
-});
+  });
+}
 
 btnYes.addEventListener("click", (e) => {
   btnNo.classList.add("hide");
